@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <title>Hello, world!</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- Adding CodeMirror -->
+    <link rel="stylesheet" href="CodeMirror/lib/codemirror.css">
+    <script src="CodeMirror/lib/codemirror.js"></script>
+    <script src="CodeMirror/mode/python/python.js"></script>
+    <script src="CodeMirror/addon/edit/matchbrackets.js"></script>
+    <script src="CodeMirror/addon/edit/closebrackets.js"></script>
+    <!-- Adding Skulpt  -->
+    <script src="dist/skulpt.min.js" type="text/javascript"></script> 
+    <script src="dist/skulpt-stdlib.js" type="text/javascript"></script> 
+
+    <!-- DA SISTEMARE! -->
+    <style>
+          .line-error {
+              background: #FBC2C4 !important;
+              color: #8a1f11 !important;
+          }
+          .CodeMirror {
+              border-radius: 25px;
+          }
+    </style>
+
+  </head>
+  <body>
+
+  <div class="container">
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark rounded">
+        <a class="navbar-brand" href="#">FARE Python</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsFARE" aria-controls="navbarsFARE" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsFARE">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="#" role="button" onclick="runit()" class="btn btn-success"><i class="fa fa-play"></i> Esegui</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" role="button" class="btn btn-warning"><i class="fa fa-floppy-o"></i> Salva</a>
+            </li>
+          </ul>
+          <li class="nav-item">
+              <a class="nav-link" href="#">Aiuto</a>
+            </li>
+          </ul>
+        </div>
+    </nav>
+
+    <div class="row mx-auto bd-example p-3"  >
+      <div id="goodresult" class="alert alert-success w-100" style="display:none;" role="alert">
+        Programma senza errori! Controlla il risultato.
+      </div>
+      <div id="badresult" class="alert alert-danger w-100" style="display:none;" role="alert">
+        Questo programma ha degli errori. Correggili!
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:2%;">
+      <div class="col-sm">
+        <!-- Input box -->
+        <form> 
+          <textarea id="yourcode"># Inserire qui di seguito il proprio codice sorgente.
+          </textarea>
+      </form>
+      </div>
+      <div class="col-sm">
+        <div id="output" ></div>         
+      </div>
+    </div>
+  </div>
+
+  
+
+      <!-- Optional JavaScript -->
+    <script type="text/javascript">
+    // Script per abilitare CodeMirror
+      var area = document.getElementById("yourcode");
+      var editor = CodeMirror.fromTextArea(area, {
+        lineNumbers: true,
+        mode: "python"
+      });
+
+    // output functions are configurable.  This one just appends some text
+    // to a pre element.
+    function outf(text) { 
+        var mypre = document.getElementById("output"); 
+        mypre.innerHTML = mypre.innerHTML + text; 
+    } 
+    function builtinRead(x) {
+        if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+                throw "File not found: '" + x + "'";
+        return Sk.builtinFiles["files"][x];
+    }
+
+    // Here's everything you need to run a python program in skulpt
+    // grab the code from your textarea
+    // get a reference to your pre element for output
+    // configure the output function
+    // call Sk.importMainWithBody()
+
+    //////////////////////////////////////
+    // Provo a dichiarare globale una var
+    var errorLineMarked = "";
+    /////////////////////////////////////
+    function runit() { 
+    //   var prog = area.value; 
+      if(errorLineMarked === ""){
+        console.log("errorLineMarked = vuoto");
+      }
+      else{
+        console.log(errorLineMarked);
+        editor.removeLineClass(errorLineMarked, "background", "line-error");
+      }
+      var prog = editor.getValue();
+       var mypre = document.getElementById("output"); 
+       mypre.innerHTML = ''; 
+       Sk.pre = "output";
+       Sk.configure({output:outf, read:builtinRead}); 
+       (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = 'mycanvas';
+       var myPromise = Sk.misceval.asyncToPromise(function() {
+           return Sk.importMainWithBody("<stdin>", false, prog, true);
+       });
+       myPromise.then(function(mod) {
+         mypre.innerText = "Risultato: \n" + mypre.innerText;
+         errorLineMarked = "";
+         // document.getElementById("output").border = "1px solid green";
+         // var res = document.getElementById("goodresult");
+         //  if (res.style.display === "none") {
+         //      res.style.display = "block";
+         //  } else {
+         //      res.style.display = "none";
+         //  }
+         var gres = $('#goodresult');
+         var bres = $('#badresult');
+         if(gres.is(":hidden")){
+          gres.show(); 
+         }
+         if(bres.is(":visible")){
+          bres.hide();  
+         }
+         console.log('success');
+       },
+           function(err) {
+            var gres = $('#goodresult');
+            var bres = $('#badresult');
+            if(bres.is(":hidden")){
+              bres.show(); 
+            }
+            if(gres.is(":visible")){
+              gres.hide();  
+            }
+            var error = err.toString();
+            // Get "line #" from error
+            var regExp = /line [0-9]/;
+            var errorLine = error.substring(error.search(regExp), error.length);
+            // Extract tokens array[0] = "line", array[1] = <my_number>
+            var errorArray = errorLine.split(" ");
+            var errorLineNumber = Number(errorArray[1].replace(/(\r\n|\n|\r|\^)/gm,"")) - 1;       
+            
+            // Setting background color to red on the line with error
+            
+            while(editor.getLine(errorLineNumber) == null){
+              errorLineNumber = errorLineNumber - 1;
+            }
+            
+            errorLineMarked = editor.addLineClass(errorLineNumber, 'background', 'line-error');
+            // Print error
+            var defErrorText = "Errore riscontrato nel codice a linea ";
+            mypre.innerText = defErrorText + (errorLineNumber+1) + ".\n" + error;
+       });
+    } 
+    </script> 
+
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+  </body>
+</html>
